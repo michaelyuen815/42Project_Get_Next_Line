@@ -10,6 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "libft.h"
+
 /*
 **rewrite string functions strchr in lib <string.h>
 **1. return pointer of position 1st integer value c is found in string *str

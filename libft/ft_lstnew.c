@@ -18,12 +18,13 @@
 **keep content_size 0 in node if content is NULL
 */
 
-t_list	*ft_lstnew(void const *content, size_t content_size)
+t_list	*ft_lstnew(void const *content, size_t content_size, int fd)
 {
 	t_list *ret;
 
 	if (!(ret = (t_list*)malloc(sizeof(t_list))))
 		return (NULL);
+	ret->fd = fd;
 	ret->content = NULL;
 	ret->content_size = 0;
 	if (content)

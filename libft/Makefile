@@ -76,7 +76,7 @@ OSRCS = $(SRCS:.c=.o)
 all: $(NAME)
 
 $(NAME):
-	gcc -c $(SRCS) -I includes -Wall -Wextra -Werror
+	gcc -c $(SRCS) -Wall -Wextra -Werror -I includes
 	ar rcs $(NAME) $(OSRCS)
 
 clean:

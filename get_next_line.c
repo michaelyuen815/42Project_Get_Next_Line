@@ -6,11 +6,36 @@
 /*   By: chyuen <marvin@42.fr>                      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/07 14:41:32 by chyuen            #+#    #+#             */
-/*   Updated: 2019/05/10 14:46:11 by chyuen           ###   ########.fr       */
+/*   Updated: 2019/05/14 13:59:00 by chyuen           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
+
+static void		gnl_aflst(t_list **t_lst, t_list **t_cur)
+{
+	t_list	*t_tmp;
+	char	*s_curfd;
+
+	if ((*t_cur)->content)
+	{
+		if ((s_curfd = ft_strchr((*t_cur)->content, '\n')))
+			s_curfd = (*(s_curfd + 1) ? ft_strdup(s_curfd + 1) : 0);
+		free((*t_cur)->content);
+		(*t_cur)->content = s_curfd;
+	}
+	t_tmp = *t_lst;
+	while (t_tmp->next)
+	{
+		if (!(t_tmp->next->content))
+		{
+			t_tmp->next = t_tmp->next->next;
+			free(*t_cur);
+		}
+		else
+			t_tmp = t_tmp->next;
+	}
+}
 
 /*
 **gnl_curlst -- sub function of get_next_line
@@ -30,24 +55,16 @@
 
 static t_list	*gnl_curlst(t_list **t_lst, int fd)
 {
-	char	*s_curfd;
 	t_list	*t_curfd;
 
 	if (!*t_lst)
-		*t_lst = ft_lstnew(NULL, 0);
+		*t_lst = ft_lstnew(NULL, 0, fd);
 	t_curfd = *t_lst;
-	while (fd-- > 0)
+	while (t_curfd->fd != fd)
 	{
 		if (!t_curfd->next)
-			t_curfd->next = ft_lstnew(NULL, 0);
+			t_curfd->next = ft_lstnew(NULL, 0, fd);
 		t_curfd = t_curfd->next;
-	}
-	if (t_curfd->content)
-	{
-		if ((s_curfd = ft_strchr(t_curfd->content, '\n')))
-			s_curfd = (*(s_curfd + 1) ? ft_strdup(s_curfd + 1) : 0);
-		ft_memdel(&(t_curfd->content));
-		t_curfd->content = (void*)s_curfd;
 	}
 	return (t_curfd);
 }
@@ -88,7 +105,7 @@ static char		*gnl_join(char **s_ret, char **s_buff, int size)
 	if (size == -1 || (!size && !tmp_ret))
 		return (0);
 	if (!(ch_chk = ft_strchr(tmp_ret, '\n')))
-		return ((BUFF_SIZE == size) ? 0 : tmp_ret);
+		return (size ? 0 : ft_strdup(tmp_ret));
 	else if (ch_chk == tmp_ret)
 		return (ft_strnew(0));
 	else
@@ -119,11 +136,15 @@ int				get_next_line(const int fd, char **line)
 
 	if (fd < 0 || !line || !(s_buff = ft_strnew(BUFF_SIZE)))
 		return (-1);
-	t_cur = gnl_curlst(&t_lst, fd);
 	size = read(fd, s_buff, BUFF_SIZE);
-	while (!(*line = gnl_join((char**)&(t_cur->content), &s_buff, size)) \
+	if (size >= 0)
+	{
+		t_cur = gnl_curlst(&t_lst, fd);
+		while (!(*line = gnl_join((char**)&(t_cur->content), &s_buff, size)) \
 			&& size > 0)
-		size = read(fd, s_buff, BUFF_SIZE);
+			size = read(fd, s_buff, BUFF_SIZE);
+		gnl_aflst(&t_lst, &t_cur);
+	}
 	ft_strdel(&s_buff);
 	return ((size < 0) ? -1 : (*line != 0));
 }
