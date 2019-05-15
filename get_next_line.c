@@ -12,6 +12,19 @@
 
 #include "get_next_line.h"
 
+/*
+**gnl_curlst -- sub function of get_next_line
+**for controlling static linked list variable (t_list) after main process
+**
+**Step 1 (line 33 - 39): revised the string value of variable (content)
+**			a. if no previous value, content remain unchanged (default value)
+**			b. if a string without new line '\n' exists, content become NULL
+**				(line 35)
+**			c. if no string after new line '\n', content become NULL (line 36)
+**			b. otherwise, content become string after new line '\n' (line 36)
+**Step 2 (line 40 - 50): delete related node if the content is NULL
+*/
+
 static void		gnl_aflst(t_list **t_lst, t_list **t_cur)
 {
 	t_list	*t_tmp;
@@ -41,16 +54,12 @@ static void		gnl_aflst(t_list **t_lst, t_list **t_cur)
 **gnl_curlst -- sub function of get_next_line
 **for controlling static linked list variable (t_list)
 **
-**Step 1 (line 37 - 45):
-**		create linked list with fd(th) nodes based on file discriptors (fd)
-**			e.g. if fd is 3, create a linked list with 3 nodes
-**Step 2 (line 45 - 51): initialzie the string value of variable (content)
-**			a. if no previous value, content become NULL (default value)
-**			b. if a string without new line '\n' exists, content become NULL
-**				(line 47)
-**			c. if no string after new line '\n', content become NULL (line 48)
-**			b. otherwise, content become string after new line '\n' (line 48)
-**Step 3: return fd(th) node for processing
+**Step 1 (line 69, 70): create a new node with file discriptor (fd)
+**		if linked list is not created.
+**Step 2 (line 71 - 77):
+**		find the corresponding node with samefile descriptor (fd)
+**		if no related node is found, create a new one at the end
+**Step 3: return corresponding node for processing
 */
 
 static t_list	*gnl_curlst(t_list **t_lst, int fd)
@@ -74,21 +83,21 @@ static t_list	*gnl_curlst(t_list **t_lst, int fd)
 ** 1. combine strings in s_buff and content of node (s_ret) to s_ret
 ** 2. return string if a new complete string line is found
 **
-** Step 1 (line 83): extract string in s_buff based on size
-** Step 2 (line 84 - 87): combine extracted string and s_ret to s_ret
-** Step 3 (line 88, 89): check last read() is valid (size must larger than 0)
+** Step 1 (line 109): extract string in s_buff based on size
+** Step 2 (line 109 - 113): combine extracted string and s_ret to s_ret
+** Step 3 (line 114, 115): check last read() is valid (size must larger than 0)
 **			if last read() is not valid and no string is found, return (0)
-** Step 4 (line 88 - 95): check whether there is complete new line found.
+** Step 4 (line 116 - 121): check whether there is complete new line found.
 **			a. if no new line '\n' found and current read() return is same as
 ** 				BUFF_SIZE, the string of current line is not yet completed,
-**				return (0) to continue read(). (line 90, 91)
+**				return (0) to continue read(). (line 116, 117)
 **			b. if no new line '\n' found and current read() return is less than
 **				BUFF_SIZE, last read() is EOF so return whole string (s_ret)
-**				(line 90, 91)
+**				(line 116, 117)
 **			c. if a new line '\n' found and no string found before 1st '\n',
-**				return an empty string (line 92, 93)
+**				return an empty string (line 118, 119)
 **			b. if a new line '\n' found and string found before 1st '\n',
-**				return string before 1st '\n' (line 95)
+**				return string before 1st '\n' (line 121)
 */
 
 static char		*gnl_join(char **s_ret, char **s_buff, int size)
@@ -115,13 +124,14 @@ static char		*gnl_join(char **s_ret, char **s_buff, int size)
 /*
 **Main function of Get_Next_Line
 **
-**Step 1 (line 120, 121): Return -1 if not enough memory or
+**Step 1 (line 147, 148): Return -1 if not enough memory or
 **			invalid input (fd < 0 and line is NULL)
-**Step 2 (line 122, 123): setup initial value of current node(t_cur) with
-**			function gnl_curlst and run a first read()
-**Step 3 (line 124 - 126): Loop read() until read() is EOF or
+**Step 2 (line 149): run a first read()
+**Step 3 (lien 152): initalize t_cur if 1st read is valid (using gnl_curlst)
+**Step 4 (line 153 - 155): Loop read() until read() is EOF or
 **			there is a complete new line found (using gnl_join)
-**Step 4 (line 128): Return indicator:
+**Step 5 (line 156): revise t_list (using gnl_aflst)
+**Step 4 (line 159): Return indicator:
 **			a. -1 when error (return -1) during running read()
 **			b. 0 when no new string found (*line is NULL)
 **			c. 1 when a new string found (*line is not NULL)
